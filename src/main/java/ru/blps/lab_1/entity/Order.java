@@ -31,6 +31,9 @@ public class Order {
     private Long restaurantId;
 
     @Column(nullable = false)
+    private String restaurantAddress;
+
+    @Column(nullable = false)
     private String city;
 
     @Column(nullable = false)
@@ -56,6 +59,7 @@ public class Order {
         Long clientId,
         Long courierId,
         Long restaurantId,
+        String restaurantAddress,
         String city,
         String deliveryAddress,
         String phone,
@@ -65,6 +69,7 @@ public class Order {
         this.clientId = clientId;
         this.courierId = courierId;
         this.restaurantId = restaurantId;
+        this.restaurantAddress = restaurantAddress;
         this.city = city;
         this.deliveryAddress = deliveryAddress;
         this.phone = phone;
@@ -86,6 +91,10 @@ public class Order {
 
     public Long getRestaurantId() {
         return restaurantId;
+    }
+
+    public String getRestaurantAddress() {
+        return restaurantAddress;
     }
 
     public String getCity() {
@@ -126,6 +135,10 @@ public class Order {
 
     public void setRestaurantId(Long restaurantId) {
         this.restaurantId = restaurantId;
+    }
+
+    public void setRestaurantAddress(String restaurantAddress) {
+        this.restaurantAddress = restaurantAddress;
     }
 
     public void setCity(String city) {
