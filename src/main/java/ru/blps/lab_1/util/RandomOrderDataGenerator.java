@@ -38,6 +38,13 @@ public final class RandomOrderDataGenerator {
         return CITIES.get(ThreadLocalRandom.current().nextInt(CITIES.size()));
     }
 
+    public static String randomRestaurantAddress() {
+        ThreadLocalRandom r = ThreadLocalRandom.current();
+        String street = STREETS.get(r.nextInt(STREETS.size()));
+        int house = r.nextInt(1, 150);
+        return "ул. " + street + ", " + house;
+    }
+
     public static String randomDeliveryAddress() {
         ThreadLocalRandom r = ThreadLocalRandom.current();
         String street = STREETS.get(r.nextInt(STREETS.size()));
