@@ -27,7 +27,7 @@ public class OrderService {
         this.orderRepository = orderRepository;
     }
 
-    public Order createOrder() {
+    public OrderDto createOrder() {
         Order order = new Order(
             RandomOrderDataGenerator.randomClientId(),
             COURIER_ID,
@@ -40,58 +40,69 @@ public class OrderService {
             OrderStatus.NEW
         );
         for (RandomOrderDataGenerator.Item itemData : RandomOrderDataGenerator.randomItems()) {
-            OrderItem item = new OrderItem(order, itemData.getName(), itemData.getQuantity());
+            OrderItem item = new OrderItem(
+                order,
+                itemData.getName(),
+                itemData.getQuantity(),
+                itemData.getPrice()
+            );
             order.addItem(item);
         }
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
     }
 
-    public Order assignOrder(Long orderId) {
+    public OrderDto assignOrder(Long orderId) {
         Order order = findOrderOrThrow(orderId);
         if (order.getStatus() != OrderStatus.NEW) {
             throw new IllegalStateException("Cannot assign order in status: " + order.getStatus());
         }
         order.setStatus(OrderStatus.ASSIGNED);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
     }
 
-    public Order acceptOrder(Long orderId) {
+    public OrderDto acceptOrder(Long orderId) {
         Order order = findOrderOrThrow(orderId);
         if (order.getStatus() != OrderStatus.ASSIGNED) {
             throw new IllegalStateException("Cannot accept order in status: " + order.getStatus());
         }
         order.setStatus(OrderStatus.ACCEPTED);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
     }
 
-    public Order rejectOrder(Long orderId) {
+    public OrderDto rejectOrder(Long orderId) {
         Order order = findOrderOrThrow(orderId);
         if (order.getStatus() != OrderStatus.ASSIGNED) {
             throw new IllegalStateException("Cannot reject order in status: " + order.getStatus());
         }
         order.setStatus(OrderStatus.REJECTED);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
     }
 
-    public Order pickupOrder(Long orderId) {
+    public OrderDto pickupOrder(Long orderId) {
         Order order = findOrderOrThrow(orderId);
         if (order.getStatus() != OrderStatus.ACCEPTED) {
             throw new IllegalStateException("Cannot pickup order in status: " + order.getStatus());
         }
         order.setStatus(OrderStatus.PICKED_UP);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
     }
 
-    public Order completeOrder(Long orderId) {
+    public OrderDto completeOrder(Long orderId) {
         Order order = findOrderOrThrow(orderId);
         if (order.getStatus() != OrderStatus.PICKED_UP) {
             throw new IllegalStateException("Cannot complete order in status: " + order.getStatus());
         }
         order.setStatus(OrderStatus.DELIVERED);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
     }
 
-    public Order cancelOrder(Long orderId) {
+    public OrderDto cancelOrder(Long orderId) {
         Order order = findOrderOrThrow(orderId);
         Set<OrderStatus> cancellable = Set.of(
             OrderStatus.NEW,
@@ -104,7 +115,8 @@ public class OrderService {
             throw new IllegalStateException("Cannot cancel order in status: " + order.getStatus());
         }
         order.setStatus(OrderStatus.CANCELLED);
-        return orderRepository.save(order);
+        Order saved = orderRepository.save(order);
+        return toDto(saved);
     }
 
     public OrderDto getOrder(Long orderId) {

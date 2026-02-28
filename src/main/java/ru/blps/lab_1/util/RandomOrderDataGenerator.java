@@ -69,7 +69,8 @@ public final class RandomOrderDataGenerator {
         for (int i = 0; i < itemCount; i++) {
             String name = DISH_NAMES.get(r.nextInt(DISH_NAMES.size()));
             int quantity = r.nextInt(1, 4);
-            items.add(new Item(name, quantity));
+            double price = 100 + r.nextInt(50, 1501);
+            items.add(new Item(name, quantity, price));
         }
         return items;
     }
@@ -77,10 +78,12 @@ public final class RandomOrderDataGenerator {
     public static class Item {
         private final String name;
         private final int quantity;
+        private final double price;
 
-        public Item(String name, int quantity) {
+        public Item(String name, int quantity, double price) {
             this.name = name;
             this.quantity = quantity;
+            this.price = price;
         }
 
         public String getName() {
@@ -89,6 +92,10 @@ public final class RandomOrderDataGenerator {
 
         public int getQuantity() {
             return quantity;
+        }
+
+        public double getPrice() {
+            return price;
         }
     }
 }
