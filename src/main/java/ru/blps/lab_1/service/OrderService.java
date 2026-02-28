@@ -2,14 +2,18 @@ package ru.blps.lab_1.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.blps.lab_1.dto.OrderDto;
+import ru.blps.lab_1.dto.OrderItemDto;
 import ru.blps.lab_1.entity.Order;
 import ru.blps.lab_1.entity.OrderItem;
 import ru.blps.lab_1.entity.OrderStatus;
 import ru.blps.lab_1.repository.OrderRepository;
 import ru.blps.lab_1.util.RandomOrderDataGenerator;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -28,13 +32,14 @@ public class OrderService {
             RandomOrderDataGenerator.randomClientId(),
             COURIER_ID,
             RandomOrderDataGenerator.randomRestaurantId(),
+            RandomOrderDataGenerator.randomRestaurantAddress(),
             RandomOrderDataGenerator.randomCity(),
             RandomOrderDataGenerator.randomDeliveryAddress(),
             RandomOrderDataGenerator.randomPhone(),
             RandomOrderDataGenerator.randomComment(),
             OrderStatus.NEW
         );
-        for (RandomOrderDataGenerator.ItemData itemData : RandomOrderDataGenerator.randomItems()) {
+        for (RandomOrderDataGenerator.Item itemData : RandomOrderDataGenerator.randomItems()) {
             OrderItem item = new OrderItem(order, itemData.getName(), itemData.getQuantity());
             order.addItem(item);
         }
@@ -89,7 +94,11 @@ public class OrderService {
     public Order cancelOrder(Long orderId) {
         Order order = findOrderOrThrow(orderId);
         Set<OrderStatus> cancellable = Set.of(
-            OrderStatus.NEW, OrderStatus.ASSIGNED, OrderStatus.ACCEPTED, OrderStatus.PICKED_UP
+            OrderStatus.NEW,
+            OrderStatus.ASSIGNED,
+            OrderStatus.ACCEPTED,
+            OrderStatus.REJECTED,
+            OrderStatus.PICKED_UP
         );
         if (!cancellable.contains(order.getStatus())) {
             throw new IllegalStateException("Cannot cancel order in status: " + order.getStatus());
@@ -98,12 +107,39 @@ public class OrderService {
         return orderRepository.save(order);
     }
 
-    public Order getOrder(Long orderId) {
-        return findOrderOrThrow(orderId);
+    public OrderDto getOrder(Long orderId) {
+        Order order = findOrderOrThrow(orderId);
+        return toDto(order);
     }
 
     private Order findOrderOrThrow(Long orderId) {
         return orderRepository.findById(orderId)
             .orElseThrow(() -> new NoSuchElementException("Order not found: " + orderId));
     }
+
+    private OrderDto toDto(Order order) {
+        List<OrderItemDto> itemDtos = order.getItems()
+            .stream()
+            .map(this::toItemDto)
+            .collect(Collectors.toList());
+
+        return new OrderDto(
+            order.getId(),
+            order.getStatus().name(),
+            order.getRestaurantAddress(),
+            order.getCity(),
+            order.getDeliveryAddress(),
+            order.getPhone(),
+            order.getComment(),
+            itemDtos
+        );
+    }
+
+    private OrderItemDto toItemDto(OrderItem item) {
+        return new OrderItemDto(
+            item.getName(),
+            item.getQuantity()
+        );
+    }
 }
+
