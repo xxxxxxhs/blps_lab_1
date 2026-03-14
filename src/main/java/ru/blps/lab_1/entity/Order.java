@@ -170,4 +170,23 @@ public class Order {
         items.remove(item);
         item.setOrder(null);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Заказ #").append(id).append("\n");
+        sb.append("Статус: ").append(status).append("\n");
+        sb.append("Клиент: ").append(clientId).append("  Курьер: ").append(courierId).append("  Ресторан: ").append(restaurantId).append("\n");
+        sb.append("Адрес доставки: ").append(city).append(", ").append(deliveryAddress).append("\n");
+        sb.append("Забрать в ресторане: ").append(restaurantAddress).append("\n");
+        sb.append("Телефон: ").append(phone);
+        if (comment != null && !comment.isBlank()) {
+            sb.append("\nКомментарий: ").append(comment);
+        }
+        sb.append("\n\nСостав заказа:\n");
+        for (OrderItem item : items) {
+            sb.append("  ").append(item.toString()).append("\n");
+        }
+        return sb.toString().trim();
+    }
 }

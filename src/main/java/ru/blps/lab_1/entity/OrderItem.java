@@ -76,4 +76,9 @@ public class OrderItem {
     public void setPrice(Double price) {
         this.price = price;
     }
+
+    @Override
+    public String toString() {
+        return "• " + name + " — " + quantity + " шт., " + String.format("%.2f", price != null ? price : 0) + " ₽";
+    }
 }

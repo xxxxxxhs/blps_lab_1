@@ -5,6 +5,7 @@ public enum OrderStatus {
     ASSIGNED,
     REJECTED,
     ACCEPTED,
+    COOKED,
     PICKED_UP,
     DELIVERED,
     CANCELLED

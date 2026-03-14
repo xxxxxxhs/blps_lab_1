@@ -15,3 +15,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
+telegram:
+  bot-token: 899752305:AAHnL5Z8dhLrMzkSG1HuKBk2ZvM_K4wXcK0
+  chat-id: 295265787

@@ -38,6 +38,11 @@ public class OrderController {
         return orderService.rejectOrder(orderId);
     }
 
+    @PostMapping("/{orderId}/cook")
+    public OrderDto cookOrder(@PathVariable Long orderId) {
+        return orderService.cookOrder(orderId);
+    }
+
     @PostMapping("/{orderId}/pickup")
     public OrderDto pickupOrder(@PathVariable Long orderId) {
         return orderService.pickupOrder(orderId);
