@@ -53,7 +53,7 @@ public class OrderService {
     private final TransactionTemplate transactionTemplate;
     private final Random random = new Random();
 
-    @Value("${telegram.chat-id:}")
+    @Value("${telegram.chatId:${telegram.chat-id:}}")
     private String telegramChatId;
 
     public OrderService(
@@ -301,9 +301,11 @@ public class OrderService {
     }
 
     public OrderDto getOrder(Long orderId) {
-        Order order = findOrderOrThrow(orderId);
-        assertOrderVisible(order);
-        return toDto(order);
+        return inTransaction(() -> {
+            Order order = findOrderOrThrow(orderId);
+            assertOrderVisible(order);
+            return toDto(order);
+        });
     }
 
     private Order findOrderOrThrow(Long orderId) {

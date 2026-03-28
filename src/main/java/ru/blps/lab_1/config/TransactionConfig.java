@@ -3,7 +3,7 @@ package ru.blps.lab_1.config;
 import org.postgresql.xa.PGXADataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.context.annotation.Primary;
 import org.springframework.transaction.jta.JtaTransactionManager;
 
 import javax.sql.DataSource;
@@ -22,7 +22,8 @@ public class TransactionConfig {
     }
 
     @Bean
-    public PlatformTransactionManager transactionManager(
+    @Primary
+    public JtaTransactionManager transactionManager(
         jakarta.transaction.UserTransaction userTransaction,
         jakarta.transaction.TransactionManager transactionManager
     ) {

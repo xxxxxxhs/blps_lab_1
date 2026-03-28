@@ -10,6 +10,7 @@ import javax.sql.XAConnection;
 import javax.sql.XADataSource;
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -17,6 +18,27 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 
 public class XaDataSourceWrapper implements DataSource {
+
+    private static final Method CONNECTION_COMMIT;
+    private static final Method CONNECTION_ROLLBACK;
+    private static final Method CONNECTION_CLOSE;
+    private static final Method CONNECTION_ABORT;
+
+    static {
+        try {
+            CONNECTION_COMMIT = Connection.class.getMethod("commit");
+            CONNECTION_ROLLBACK = Connection.class.getMethod("rollback");
+            CONNECTION_CLOSE = Connection.class.getMethod("close");
+            Method abort = null;
+            try {
+                abort = Connection.class.getMethod("abort", java.util.concurrent.Executor.class);
+            } catch (NoSuchMethodException ignored) {
+            }
+            CONNECTION_ABORT = abort;
+        } catch (NoSuchMethodException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     private final XADataSource xaDataSource;
     private final TransactionManager transactionManager;
@@ -43,13 +65,28 @@ public class XaDataSourceWrapper implements DataSource {
                     Connection.class.getClassLoader(),
                     new Class<?>[]{Connection.class},
                     (p, method, args) -> {
-                        if ("close".equals(method.getName())) {
-                            return null; // no-op: connection is closed after tx completion
+                        if (method.equals(CONNECTION_COMMIT)
+                            || method.equals(CONNECTION_ROLLBACK)
+                            || method.equals(CONNECTION_CLOSE)
+                            || (CONNECTION_ABORT != null && method.equals(CONNECTION_ABORT))) {
+                            return null;
                         }
                         try {
                             return method.invoke(real, args);
                         } catch (InvocationTargetException e) {
-                            throw e.getCause();
+                            Throwable c = e.getCause();
+                            if (c == null) {
+                                throw e;
+                            }
+                            if (c instanceof SQLException sqlEx) {
+                                String m = sqlEx.getMessage();
+                                if (m != null && m.contains("Connection has been closed automatically")) {
+                                    if (method.equals(CONNECTION_COMMIT) || method.equals(CONNECTION_ROLLBACK)) {
+                                        return null;
+                                    }
+                                }
+                            }
+                            throw c;
                         }
                     }
                 );
