@@ -1,13 +1,14 @@
-app:
-  seed-data: true
-
 server:
   port: 8080
 
 spring:
   application:
     name: lab_1
+  sql:
+    init:
+      mode: always
   jpa:
+    defer-datasource-initialization: true
     hibernate:
       ddl-auto: update
     show-sql: true
