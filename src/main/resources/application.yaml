@@ -1,13 +1,12 @@
+app:
+  seed-data: true
+
+server:
+  port: 8080
+
 spring:
   application:
     name: lab_1
-  server:
-    port: 8080
-  datasource:
-    url: jdbc:postgresql://localhost:5432/lab_1
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -15,6 +14,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        transaction:
+          jta:
+            platform: org.hibernate.engine.transaction.jta.platform.internal.NarayanaJtaPlatform
+  jta:
+    enabled: true
+    narayana:
+      transaction-manager-id: lab1-tm
+
 telegram:
   bot-token: 899752305:AAHnL5Z8dhLrMzkSG1HuKBk2ZvM_K4wXcK0
   chat-id: 295265787

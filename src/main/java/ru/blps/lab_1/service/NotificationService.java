@@ -18,8 +18,9 @@ public class NotificationService {
 
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
-    public void send(Recipient target, String chatId, String messageText) {
-        String fullText = target.getLabel() + "\n" + messageText;
+    public void send(Recipient target, Long recipientId, String chatId, String messageText) {
+        String header = recipientId == null ? target.getLabel() : target.getLabel() + " id=" + recipientId;
+        String fullText = header + "\n" + messageText;
         String json = "{\"chat_id\":\"" + escapeJson(chatId) + "\",\"text\":\"" + escapeJson(fullText) + "\"}";
         String url = String.format(TELEGRAM_SEND_URL, botToken);
         HttpRequest request = HttpRequest.newBuilder()

@@ -1,15 +1,18 @@
 package ru.blps.lab_1.entity;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Id;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.CascadeType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,15 +23,18 @@ public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
-    @Column(nullable = false)
-    private Long clientId;
 
-    @Column(nullable = false)
-    private Long courierId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "client_id", nullable = false)
+    private AppUser client;
 
-    @Column(nullable = false)
-    private Long restaurantId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "courier_id")
+    private Courier courier;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "restaurant_id", nullable = false)
+    private Restaurant restaurant;
 
     @Column(nullable = false)
     private String restaurantAddress;
@@ -56,6 +62,28 @@ public class Order {
     }
 
     public Order(
+        AppUser client,
+        Courier courier,
+        Restaurant restaurant,
+        String restaurantAddress,
+        String city,
+        String deliveryAddress,
+        String phone,
+        String comment,
+        OrderStatus status
+    ) {
+        this.client = client;
+        this.courier = courier;
+        this.restaurant = restaurant;
+        this.restaurantAddress = restaurantAddress;
+        this.city = city;
+        this.deliveryAddress = deliveryAddress;
+        this.phone = phone;
+        this.comment = comment;
+        this.status = status;
+    }   
+
+    public Order(
         Long clientId,
         Long courierId,
         Long restaurantId,
@@ -66,31 +94,52 @@ public class Order {
         String comment,
         OrderStatus status
     ) {
-        this.clientId = clientId;
-        this.courierId = courierId;
-        this.restaurantId = restaurantId;
+        AppUser clientRef = new AppUser();
+        clientRef.setId(clientId);
+        Courier courierRef = null;
+        if (courierId != null) {
+            courierRef = new Courier();
+            courierRef.setId(courierId);
+        }
+        Restaurant restaurantRef = new Restaurant();
+        restaurantRef.setId(restaurantId);
+        this.client = clientRef;
+        this.courier = courierRef;
+        this.restaurant = restaurantRef;
         this.restaurantAddress = restaurantAddress;
         this.city = city;
         this.deliveryAddress = deliveryAddress;
         this.phone = phone;
         this.comment = comment;
         this.status = status;
-    }   
+    }
 
     public Long getId() {
         return id;
     }
 
+    public AppUser getClient() {
+        return client;
+    }
+
     public Long getClientId() {
-        return clientId;
+        return client != null ? client.getId() : null;
+    }
+
+    public Courier getCourier() {
+        return courier;
     }
 
     public Long getCourierId() {
-        return courierId;
+        return courier != null ? courier.getId() : null;
+    }
+
+    public Restaurant getRestaurant() {
+        return restaurant;
     }
 
     public Long getRestaurantId() {
-        return restaurantId;
+        return restaurant != null ? restaurant.getId() : null;
     }
 
     public String getRestaurantAddress() {
@@ -119,22 +168,55 @@ public class Order {
 
     public void setStatus(OrderStatus status) {
         this.status = status;
-    }       
+    }
+
+    public void setClient(AppUser client) {
+        this.client = client;
+    }
 
     public void setClientId(Long clientId) {
-        this.clientId = clientId;
+        if (clientId == null) {
+            this.client = null;
+            return;
+        }
+        if (this.client == null) {
+            this.client = new AppUser();
+        }
+        this.client.setId(clientId);
+    }
+
+    public void setCourier(Courier courier) {
+        this.courier = courier;
     }
 
     public void setCourierId(Long courierId) {
-        this.courierId = courierId;
+        if (courierId == null) {
+            this.courier = null;
+            return;
+        }
+        if (this.courier == null) {
+            this.courier = new Courier();
+        }
+        this.courier.setId(courierId);
     }
 
     public void setComment(String comment) {
         this.comment = comment;
     }
 
+    public void setRestaurant(Restaurant restaurant) {
+        this.restaurant = restaurant;
+    }
+
     public void setRestaurantId(Long restaurantId) {
-        this.restaurantId = restaurantId;
+        if (restaurantId == null) {
+            this.restaurant = null;
+            return;
+        }
+        if (this.restaurant == null) {
+            this.restaurant = new Restaurant();
+        }
+        this.restaurant.setId(restaurantId);
     }
 
     public void setRestaurantAddress(String restaurantAddress) {
@@ -173,6 +255,9 @@ public class Order {
 
     @Override
     public String toString() {
+        Long clientId = client != null ? client.getId() : null;
+        Long courierId = courier != null ? courier.getId() : null;
+        Long restaurantId = restaurant != null ? restaurant.getId() : null;
         StringBuilder sb = new StringBuilder();
         sb.append("Заказ #").append(id).append("\n");
         sb.append("Статус: ").append(status).append("\n");

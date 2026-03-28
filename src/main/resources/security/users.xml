@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<users>
+    <user username="client1" password="client1">
+        <role>CLIENT</role>
+    </user>
+    <user username="client2" password="client2">
+        <role>CLIENT</role>
+    </user>
+    <user username="client3" password="client3">
+        <role>CLIENT</role>
+    </user>
+    <user username="client4" password="client4">
+        <role>CLIENT</role>
+    </user>
+    <user username="client5" password="client5">
+        <role>CLIENT</role>
+    </user>
+    <user username="courier1" password="courier1">
+        <role>COURIER</role>
+    </user>
+    <user username="courier2" password="courier2">
+        <role>COURIER</role>
+    </user>
+    <user username="courier3" password="courier3">
+        <role>COURIER</role>
+    </user>
+    <user username="courier4" password="courier4">
+        <role>COURIER</role>
+    </user>
+    <user username="courier5" password="courier5">
+        <role>COURIER</role>
+    </user>
+    <user username="restaurant1" password="restaurant1">
+        <role>RESTAURANT</role>
+    </user>
+    <user username="restaurant2" password="restaurant2">
+        <role>RESTAURANT</role>
+    </user>
+    <user username="restaurant3" password="restaurant3">
+        <role>RESTAURANT</role>
+    </user>
+    <user username="restaurant4" password="restaurant4">
+        <role>RESTAURANT</role>
+    </user>
+    <user username="restaurant5" password="restaurant5">
+        <role>RESTAURANT</role>
+    </user>
+</users>
