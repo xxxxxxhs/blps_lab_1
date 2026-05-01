@@ -33,7 +33,11 @@ out/
 /nbdist/
 /.nb-gradle/
 
+.claude
+
 ### VS Code ###
 .vscode/
 
 /gradlew.bat
+ObjectStore
+PutObjectStoreDirHere

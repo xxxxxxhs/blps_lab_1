@@ -1,6 +1,7 @@
 package ru.blps.lab_1.config;
 
 import org.postgresql.xa.PGXADataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -10,6 +11,21 @@ import javax.sql.DataSource;
 
 @Configuration
 public class TransactionConfig {
+
+    @Value("${spring.datasource.host:db}")
+    private String dbHost;
+
+    @Value("${spring.datasource.port:5432}")
+    private int dbPort;
+
+    @Value("${spring.datasource.dbname:postgres}")
+    private String dbName;
+
+    @Value("${spring.datasource.username:postgres}")
+    private String dbUser;
+
+    @Value("${spring.datasource.password:postgres}")
+    private String dbPassword;
 
     @Bean
     public jakarta.transaction.UserTransaction userTransaction() {
@@ -33,11 +49,11 @@ public class TransactionConfig {
     @Bean
     public DataSource dataSource() {
         PGXADataSource xaDataSource = new PGXADataSource();
-        xaDataSource.setServerNames(new String[]{"localhost"});
-        xaDataSource.setPortNumbers(new int[]{5432});
-        xaDataSource.setDatabaseName("lab_1");
-        xaDataSource.setUser("postgres");
-        xaDataSource.setPassword("postgres");
+        xaDataSource.setServerNames(new String[]{dbHost});
+        xaDataSource.setPortNumbers(new int[]{dbPort});
+        xaDataSource.setDatabaseName(dbName);
+        xaDataSource.setUser(dbUser);
+        xaDataSource.setPassword(dbPassword);
         return new XaDataSourceWrapper(xaDataSource, narayanaTransactionManager());
     }
 }

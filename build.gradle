@@ -26,6 +26,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	implementation 'org.jboss.narayana.jta:narayana-jta:7.2.2.Final'
+	implementation 'org.apache.activemq:activemq-client-jakarta:5.18.3'
+	implementation 'org.springframework:spring-jms'
+	implementation 'com.fasterxml.jackson.core:jackson-databind'
 }
 
 tasks.named('test') {

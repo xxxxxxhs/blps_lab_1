@@ -1,16 +1,25 @@
 server:
-  port: 8080
+  port: ${RUNNING_PORT}
 
 spring:
   application:
-    name: lab_1
+    instance-num: ${INSTANCE_NUM}
+    name: lab_3
+  datasource:
+    url: jdbc:postgresql://db:5432/postgres
+    username: postgres
+    password: postgres
+    host: db
+    port: 5432
+    dbname: postgres
   sql:
     init:
       mode: always
   jpa:
     defer-datasource-initialization: true
+    open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: ${DDL_AUTO:update}
     show-sql: true
     properties:
       hibernate:
@@ -21,7 +30,13 @@ spring:
   jta:
     enabled: true
     narayana:
-      transaction-manager-id: lab1-tm
+      transaction-manager-id: ${SPRING_JTA_NARAYANA_TRANSACTION_MANAGER_ID}
+
+activemq:
+  host: activemq
+  stomp-port: 61613
+  broker-url: tcp://activemq:61616
+  queue: order.notifications
 
 telegram:
   bot-token: 899752305:AAHnL5Z8dhLrMzkSG1HuKBk2ZvM_K4wXcK0
