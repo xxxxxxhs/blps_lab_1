@@ -112,7 +112,6 @@ public class OrderService {
             );
             order.setStatus(OrderStatus.ACCEPTED);
             Order saved = orderRepository.save(order);
-            // ACCEPTED — прямое уведомление без очереди
             if (telegramChatId != null && !telegramChatId.isBlank()) {
                 notificationService.send(Recipient.CLIENT, saved.getClientId(), telegramChatId,
                     "Заказ #" + saved.getId() + " — курьер принял заказ.");
@@ -215,7 +214,6 @@ public class OrderService {
                 && order.getStatus() != OrderStatus.PICKED_UP;
             order.setStatus(OrderStatus.CANCELLED);
             Order saved = orderRepository.save(order);
-            // CANCELLED — прямое уведомление без очереди
             if (telegramChatId != null && !telegramChatId.isBlank()) {
                 notificationService.send(Recipient.CLIENT, saved.getClientId(), telegramChatId,
                     "Заказ #" + saved.getId() + " отменён.");
@@ -238,8 +236,6 @@ public class OrderService {
         });
     }
 
-    // Регистрирует отправку STOMP-сообщений ПОСЛЕ коммита XA-транзакции.
-    // Если транзакция откатилась — сообщения не отправляются.
     private void scheduleNotification(OrderNotificationMessage... messages) {
         if (telegramChatId == null || telegramChatId.isBlank()) return;
         List<OrderNotificationMessage> msgs = List.of(messages);

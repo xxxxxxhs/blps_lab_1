@@ -108,7 +108,6 @@ public class XaDataSourceWrapper implements DataSource {
         } catch (Exception e) {
             throw new SQLException("Failed to enlist XA resource in JTA transaction", e);
         }
-        // No active JTA transaction — return a plain connection
         return xaDataSource.getXAConnection().getConnection();
     }
 
