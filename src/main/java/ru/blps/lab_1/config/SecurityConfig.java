@@ -59,7 +59,9 @@ public class SecurityConfig {
     ) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/documents/**").permitAll()
+                .anyRequest().authenticated())
             .httpBasic(Customizer.withDefaults())
             .authenticationManager(authenticationManager);
         return http.build();

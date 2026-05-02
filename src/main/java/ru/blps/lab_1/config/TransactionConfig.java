@@ -47,6 +47,7 @@ public class TransactionConfig {
     }
 
     @Bean
+    @Primary
     public DataSource dataSource() {
         PGXADataSource xaDataSource = new PGXADataSource();
         xaDataSource.setServerNames(new String[]{dbHost});

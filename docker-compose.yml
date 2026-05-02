@@ -11,7 +11,7 @@ services:
       - POSTGRES_DB=postgres
 
   onlyoffice:
-    image: onlyoffice/documentserver:9.3
+    image: onlyoffice/documentserver:7.5.1
     container_name: onlyoffice
     depends_on:
       - db
@@ -26,6 +26,7 @@ services:
       - JWT_SECRET=
       - JWT_HEADER=Authorization
       - USE_UNAUTHORIZED_STORAGE=true
+      - ALLOW_PRIVATE_IP_ADDRESS=true
 
   activemq:
     image: apache/activemq-classic:6.1.0
@@ -39,6 +40,8 @@ services:
       - INSTANCE_NUM=1
       - SPRING_JTA_NARAYANA_TRANSACTION_MANAGER_ID=lab1-tm-1
       - DDL_AUTO=update
+    volumes:
+      - reports:/app/reports
     depends_on:
       - db
       - activemq
@@ -57,6 +60,8 @@ services:
       - INSTANCE_NUM=2
       - SPRING_JTA_NARAYANA_TRANSACTION_MANAGER_ID=lab1-tm-2
       - DDL_AUTO=validate
+    volumes:
+      - reports:/app/reports
     depends_on:
       app-1:
         condition: service_healthy
@@ -74,3 +79,6 @@ services:
       - app-1
       - app-2
       - onlyoffice
+
+volumes:
+  reports:

@@ -31,6 +31,17 @@ spring:
     enabled: true
     narayana:
       transaction-manager-id: ${SPRING_JTA_NARAYANA_TRANSACTION_MANAGER_ID}
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: always
+    properties:
+      org.quartz.scheduler.instanceName: lab1-scheduler
+      org.quartz.scheduler.instanceId: AUTO
+      org.quartz.jobStore.driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
+      org.quartz.jobStore.isClustered: true
+      org.quartz.jobStore.clusterCheckinInterval: 10000
+      org.quartz.threadPool.threadCount: 5
 
 activemq:
   host: activemq
@@ -41,3 +52,14 @@ activemq:
 telegram:
   bot-token: 899752305:AAHnL5Z8dhLrMzkSG1HuKBk2ZvM_K4wXcK0
   chat-id: 295265787
+
+eis:
+  onlyoffice:
+    base-url: http://onlyoffice
+    storage-dir: /app/reports
+    public-base-url: http://nginx
+  reports:
+    daily-cron: "0 55 23 * * ?"
+    hourly-cron: "0 0 * * * ?"
+    stuck-cron: "0 0/15 * * * ?"
+    stuck-threshold-minutes: 30
