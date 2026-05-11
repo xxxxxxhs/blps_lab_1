@@ -15,37 +15,64 @@ import javax.security.auth.Subject;
 import javax.transaction.xa.XAResource;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 public class OnlyOfficeManagedConnection implements ManagedConnection {
 
     private static final Logger log = LoggerFactory.getLogger(OnlyOfficeManagedConnection.class);
 
-    private final Path storageDir;
-    private final String publicBaseUrl;
+    private final String webdavBaseUrl;
+    private final String basicAuth;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
     private final List<ConnectionEventListener> listeners = new ArrayList<>();
     private final List<OnlyOfficeConnectionImpl> handles = new ArrayList<>();
     private PrintWriter logWriter;
 
-    public OnlyOfficeManagedConnection(Path storageDir, String publicBaseUrl) {
-        this.storageDir = storageDir;
-        this.publicBaseUrl = publicBaseUrl;
+    public OnlyOfficeManagedConnection(String webdavBaseUrl, String user, String password) {
+        this.webdavBaseUrl = webdavBaseUrl;
+        this.basicAuth = "Basic " + Base64.getEncoder()
+                .encodeToString((user + ":" + password).getBytes(StandardCharsets.UTF_8));
     }
 
-    PublishedDocument publishDocument(String fileName, byte[] body) throws ResourceException {
+    PublishedDocument publishDocument(String subDir, String fileName, byte[] body) throws ResourceException {
         try {
-            Files.createDirectories(storageDir);
-            Path target = storageDir.resolve(fileName);
-            Files.write(target, body, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            String url = publicBaseUrl + "/api/documents/" + fileName;
+            ensureDirectory("reports");
+            ensureDirectory("reports/" + subDir);
+            String url = webdavBaseUrl + "/reports/" + subDir + "/" + fileName;
+            HttpRequest put = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Authorization", basicAuth)
+                    .header("Content-Type", "text/csv; charset=UTF-8")
+                    .PUT(HttpRequest.BodyPublishers.ofByteArray(body))
+                    .build();
+            HttpResponse<String> response = httpClient.send(put, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 300) {
+                throw new ResourceException("Nextcloud WebDAV PUT failed: HTTP " + response.statusCode()
+                        + " for " + url + " — " + response.body());
+            }
             log.info("EIS: published document {} ({} bytes) -> {}", fileName, body.length, url);
             return new PublishedDocument(fileName, url, body.length);
-        } catch (IOException e) {
-            throw new ResourceException("Failed to publish document: " + e.getMessage(), e);
+        } catch (IOException | InterruptedException e) {
+            throw new ResourceException("Failed to publish document to Nextcloud: " + e.getMessage(), e);
+        }
+    }
+
+    private void ensureDirectory(String path) throws IOException, InterruptedException, ResourceException {
+        HttpRequest mkcol = HttpRequest.newBuilder()
+                .uri(URI.create(webdavBaseUrl + "/" + path))
+                .header("Authorization", basicAuth)
+                .method("MKCOL", HttpRequest.BodyPublishers.noBody())
+                .build();
+        int status = httpClient.send(mkcol, HttpResponse.BodyHandlers.discarding()).statusCode();
+        if (status != 201 && status != 405 && status != 423) {
+            throw new ResourceException("MKCOL failed for " + path + ": HTTP " + status);
         }
     }
 

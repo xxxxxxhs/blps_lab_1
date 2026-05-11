@@ -4,19 +4,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 @Configuration
 public class EisConfig {
 
     @Bean
     public OnlyOfficeManagedConnectionFactory onlyOfficeManagedConnectionFactory(
-        @Value("${eis.onlyoffice.storage-dir:/app/reports}") String storageDir,
-        @Value("${eis.onlyoffice.public-base-url:http://nginx}") String publicBaseUrl
+        @Value("${eis.nextcloud.webdav-url:http://nginx/cloud/remote.php/dav/files/admin}") String webdavUrl,
+        @Value("${eis.nextcloud.user:admin}") String user,
+        @Value("${eis.nextcloud.password:admin}") String password
     ) {
-        Path dir = Paths.get(storageDir);
-        return new OnlyOfficeManagedConnectionFactory(dir, publicBaseUrl);
+        return new OnlyOfficeManagedConnectionFactory(webdavUrl, user, password);
     }
 
     @Bean

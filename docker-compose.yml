@@ -5,6 +5,7 @@ services:
     container_name: postgres
     volumes:
       - ./db_scripts:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
@@ -73,12 +74,35 @@ services:
     container_name: nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - nextcloud_data:/var/www/html:ro
     ports:
       - "80:80"
     depends_on:
       - app-1
       - app-2
       - onlyoffice
+      - nextcloud
+
+  nextcloud:
+    image: nextcloud:stable-fpm-alpine
+    container_name: nextcloud
+    volumes:
+      - nextcloud_data:/var/www/html
+    depends_on:
+      - db
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_USER=nextcloud_user
+      - POSTGRES_PASSWORD=nextcloud
+      - POSTGRES_DB=nextcloud
+      - NEXTCLOUD_ADMIN_USER=admin
+      - NEXTCLOUD_ADMIN_PASSWORD=admin
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost nginx
+      - OVERWRITEWEBROOT=/cloud
+      - OVERWRITECLIURL=http://localhost/cloud
+      - OVERWRITEPROTOCOL=http
 
 volumes:
   reports:
+  nextcloud_data:
+  postgres_data:

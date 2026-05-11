@@ -5,5 +5,5 @@ import jakarta.resource.cci.Connection;
 
 public interface OnlyOfficeConnection extends Connection {
 
-    PublishedDocument publishDocument(String fileName, byte[] body) throws ResourceException;
+    PublishedDocument publishDocument(String subDir, String fileName, byte[] body) throws ResourceException;
 }

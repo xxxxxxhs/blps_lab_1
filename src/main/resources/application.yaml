@@ -54,9 +54,12 @@ telegram:
   chat-id: 295265787
 
 eis:
+  nextcloud:
+    webdav-url: http://nginx/cloud/remote.php/dav/files/admin
+    user: admin
+    password: admin
   onlyoffice:
     base-url: http://onlyoffice
-    storage-dir: /app/reports
     public-base-url: http://nginx
   reports:
     daily-cron: "0 55 23 * * ?"

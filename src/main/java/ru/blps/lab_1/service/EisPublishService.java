@@ -33,7 +33,7 @@ public class EisPublishService {
         OnlyOfficeConnection conn = null;
         try {
             conn = connectionFactory.getConnection(new OnlyOfficeConnectionSpec(reportType));
-            PublishedDocument pub = conn.publishDocument(fileName, body);
+            PublishedDocument pub = conn.publishDocument(reportType, fileName, body);
             EisReport report = new EisReport(reportType, pub.getFileName(), pub.getStorageUrl(), pub.getSizeBytes(), instanceNum);
             return reportRepository.save(report);
         } catch (ResourceException e) {

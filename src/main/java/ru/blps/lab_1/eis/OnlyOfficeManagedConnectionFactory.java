@@ -9,18 +9,19 @@ import jakarta.resource.spi.ManagedConnectionFactory;
 
 import javax.security.auth.Subject;
 import java.io.PrintWriter;
-import java.nio.file.Path;
 import java.util.Set;
 
 public class OnlyOfficeManagedConnectionFactory implements ManagedConnectionFactory {
 
-    private final Path storageDir;
-    private final String publicBaseUrl;
+    private final String webdavBaseUrl;
+    private final String user;
+    private final String password;
     private PrintWriter logWriter;
 
-    public OnlyOfficeManagedConnectionFactory(Path storageDir, String publicBaseUrl) {
-        this.storageDir = storageDir;
-        this.publicBaseUrl = publicBaseUrl;
+    public OnlyOfficeManagedConnectionFactory(String webdavBaseUrl, String user, String password) {
+        this.webdavBaseUrl = webdavBaseUrl;
+        this.user = user;
+        this.password = password;
     }
 
     @Override
@@ -35,7 +36,7 @@ public class OnlyOfficeManagedConnectionFactory implements ManagedConnectionFact
 
     @Override
     public ManagedConnection createManagedConnection(Subject subject, ConnectionRequestInfo cxRequestInfo) {
-        return new OnlyOfficeManagedConnection(storageDir, publicBaseUrl);
+        return new OnlyOfficeManagedConnection(webdavBaseUrl, user, password);
     }
 
     @Override

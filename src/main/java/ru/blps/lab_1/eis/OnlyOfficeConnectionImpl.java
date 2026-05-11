@@ -20,9 +20,9 @@ public class OnlyOfficeConnectionImpl implements OnlyOfficeConnection {
     }
 
     @Override
-    public PublishedDocument publishDocument(String fileName, byte[] body) throws ResourceException {
+    public PublishedDocument publishDocument(String subDir, String fileName, byte[] body) throws ResourceException {
         if (mc == null) throw new ResourceException("Connection is closed");
-        return mc.publishDocument(fileName, body);
+        return mc.publishDocument(subDir, fileName, body);
     }
 
     @Override
