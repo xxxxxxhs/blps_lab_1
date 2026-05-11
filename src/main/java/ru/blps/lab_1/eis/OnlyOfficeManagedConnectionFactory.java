@@ -1,6 +1,5 @@
 package ru.blps.lab_1.eis;
 
-import jakarta.resource.NotSupportedException;
 import jakarta.resource.ResourceException;
 import jakarta.resource.spi.ConnectionManager;
 import jakarta.resource.spi.ConnectionRequestInfo;

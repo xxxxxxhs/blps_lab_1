@@ -297,6 +297,127 @@ NEW ──[accept]──→ ACCEPTED ──[cook]──→ COOKED ──[pickup]
 
 ---
 
+## JCA-адаптер (Nextcloud/OnlyOffice)
+
+### Файлы и их назначение
+
+| Файл | Роль в JCA |
+|------|-----------|
+| `EisConfig.java` | Spring `@Configuration` — создаёт бины `ManagedConnectionFactory` и `ConnectionFactory` из `application.yaml` |
+| `OnlyOfficeManagedConnectionFactory.java` | Фабрика физических соединений. Хранит URL/логин/пароль, создаёт `ManagedConnection` по запросу `ConnectionManager`-а |
+| `OnlyOfficeManagedConnection.java` | Физическое соединение — настоящий `HttpClient`. Делает HTTP PUT (WebDAV) в Nextcloud, MKCOL для создания директорий. Хранит список `ConnectionEventListener`-ов |
+| `DefaultConnectionManager.java` | Упрощённый `ConnectionManager` без пула: каждый вызов создаёт новое физическое соединение |
+| `OnlyOfficeConnectionFactoryImpl.java` | CCI `ConnectionFactory` — то, что инжектится в бизнес-код. `getConnection()` → `ConnectionManager.allocateConnection()` |
+| `OnlyOfficeConnectionImpl.java` | Handle-обёртка над `ManagedConnection`, которую держит бизнес-код. При `close()` — сигнализирует MC |
+| `OnlyOfficeConnection.java` | Интерфейс handle-а: один метод `publishDocument()` |
+| `OnlyOfficeConnectionFactory.java` | Интерфейс фабрики: расширяет стандартный `ConnectionFactory`, добавляет `getConnection(OnlyOfficeConnectionSpec)` |
+| `OnlyOfficeConnectionSpec.java` | `ConnectionSpec` — параметры конкретного запроса (тип отчёта = subDir в WebDAV-пути) |
+| `PublishedDocument.java` | DTO результата: имя файла, WebDAV URL, размер |
+
+---
+
+### Как это выглядело бы на WildFly
+
+В нашем проекте всё живёт внутри одного Spring Boot JAR — `DefaultConnectionManager` не умеет пулить соединения, а `ManagedConnectionFactory` создаётся как обычный Spring Bean.
+
+На настоящем Jakarta EE сервере (WildFly, GlassFish) адаптер упаковывается отдельно и разворачивается сервером:
+
+**Структура RAR-архива** (Resource Adapter Archive, аналог WAR для коннекторов):
+
+```
+onlyoffice-adapter.rar
+├── META-INF/
+│   └── ra.xml                          ← дескриптор: описывает классы адаптера,
+│                                          типы транзакций, config-property для URL/логина
+└── onlyoffice-adapter.jar
+    └── ru/blps/lab_1/eis/
+        ├── OnlyOfficeManagedConnectionFactory.class
+        ├── OnlyOfficeManagedConnection.class
+        ├── OnlyOfficeConnectionFactoryImpl.class
+        ├── OnlyOfficeConnectionImpl.class
+        └── ...
+```
+
+`ra.xml` — это XML-манифест адаптера. В нём объявлено:
+- какой класс является `ManagedConnectionFactory`
+- какие config-property (webdavUrl, user, password) настраиваются через консоль сервера
+- тип транзакций: `NoTransaction` / `LocalTransaction` / `XATransaction`
+
+**Жизненный цикл на сервере:**
+
+```
+Деплой RAR
+    │
+    ▼
+WildFly читает ra.xml
+    │  создаёт и конфигурирует
+    ▼
+ManagedConnectionFactory (singleton)
+    │
+    │  при первом getConnection()
+    ▼
+ConnectionManager (встроенный в сервер — умеет пулить!)
+    │  вызывает mcf.createManagedConnection()
+    ▼
+ManagedConnection (из пула или новый)
+    │  возвращает
+    ▼
+ConnectionImpl (handle) ── инжектится в EJB/@Resource
+```
+
+Приложение (WAR/EAR) обращается к адаптеру через JNDI-lookup или `@Resource`:
+
+```java
+// В нашем коде (Spring) — через @Autowired:
+@Autowired OnlyOfficeConnectionFactory cf;
+
+// На WildFly — через JNDI:
+@Resource(lookup = "java:/eis/OnlyOfficeConnectionFactory")
+OnlyOfficeConnectionFactory cf;
+```
+
+**Что сервер берёт на себя вместо нашего `DefaultConnectionManager`:**
+- пул физических соединений с min/max размером
+- проверка живости соединений (validation)
+- участие в XA-транзакциях (если адаптер объявляет `XATransaction` в `ra.xml`)
+- статистика и мониторинг через консоль
+
+---
+
+### Схема вызова — от бизнес-кода до Nextcloud
+
+```
+EisPublishService
+  │  connectionFactory.getConnection(spec)
+  ▼
+OnlyOfficeConnectionFactoryImpl
+  │  cm.allocateConnection(mcf, null)
+  ▼
+DefaultConnectionManager                    ← на WildFly здесь был бы пул сервера
+  │  mcf.createManagedConnection()
+  ▼
+OnlyOfficeManagedConnectionFactory
+  │  new OnlyOfficeManagedConnection(url, user, password)
+  ▼
+OnlyOfficeManagedConnection
+  │  mc.getConnection()  →  new OnlyOfficeConnectionImpl(this)
+  ▼
+OnlyOfficeConnectionImpl  ──────────────────  возвращается в EisPublishService
+  │
+  │  conn.publishDocument("daily", "report.csv", bytes)
+  │       └── mc.publishDocument()
+  ▼
+HttpClient.send( PUT http://nginx/cloud/remote.php/dav/files/admin/reports/daily/report.csv )
+  │
+  ▼
+Nextcloud WebDAV  →  файл сохранён
+  │
+  ▼
+EisReport сохраняется в PostgreSQL (storageUrl, fileName, sizeBytes, ...)
+```
+
+---
+
 ## Архитектура
 
 ```
