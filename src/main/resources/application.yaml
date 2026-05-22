@@ -1,17 +1,9 @@
-server:
-  port: ${RUNNING_PORT}
-
 spring:
   application:
     instance-num: ${INSTANCE_NUM}
-    name: lab_3
+    name: lab_1
   datasource:
-    url: jdbc:postgresql://db:5432/postgres
-    username: postgres
-    password: postgres
-    host: db
-    port: 5432
-    dbname: postgres
+    jndi-name: java:/jboss/datasources/lab1XADS
   sql:
     init:
       mode: always
@@ -26,11 +18,9 @@ spring:
         format_sql: true
         transaction:
           jta:
-            platform: org.hibernate.engine.transaction.jta.platform.internal.NarayanaJtaPlatform
+            platform: org.hibernate.engine.transaction.jta.platform.internal.JBossAppServerJtaPlatform
   jta:
     enabled: true
-    narayana:
-      transaction-manager-id: ${SPRING_JTA_NARAYANA_TRANSACTION_MANAGER_ID}
   quartz:
     job-store-type: jdbc
     jdbc:

@@ -1,1 +1,2 @@
 rootProject.name = 'lab_1'
+include 'eis-adapter'

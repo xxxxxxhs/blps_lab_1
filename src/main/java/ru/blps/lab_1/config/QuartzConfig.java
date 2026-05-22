@@ -6,10 +6,10 @@ import org.quartz.JobDetail;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.quartz.autoconfigure.QuartzDataSource;
-import org.springframework.boot.jdbc.DataSourceBuilder;
+import org.springframework.boot.autoconfigure.quartz.QuartzDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.jdbc.datasource.lookup.JndiDataSourceLookup;
 import ru.blps.lab_1.jobs.DailyReportJob;
 import ru.blps.lab_1.jobs.HourlyActiveOrdersJob;
 import ru.blps.lab_1.jobs.StuckOrdersJob;
@@ -19,24 +19,11 @@ import javax.sql.DataSource;
 @Configuration
 public class QuartzConfig {
 
-    @Value("${spring.datasource.url}")
-    private String jdbcUrl;
-
-    @Value("${spring.datasource.username}")
-    private String jdbcUser;
-
-    @Value("${spring.datasource.password}")
-    private String jdbcPassword;
-
     @Bean
     @QuartzDataSource
     public DataSource quartzDataSource() {
-        return DataSourceBuilder.create()
-            .url(jdbcUrl)
-            .username(jdbcUser)
-            .password(jdbcPassword)
-            .driverClassName("org.postgresql.Driver")
-            .build();
+        JndiDataSourceLookup lookup = new JndiDataSourceLookup();
+        return lookup.getDataSource("java:/jboss/datasources/lab1XADS");
     }
 
     @Value("${eis.reports.daily-cron:0 55 23 * * ?}")

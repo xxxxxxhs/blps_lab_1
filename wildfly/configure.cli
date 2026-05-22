@@ -1,0 +1,22 @@
+embed-server --server-config=standalone.xml --std-out=echo
+
+/subsystem=datasources/jdbc-driver=postgresql:add(\
+  driver-name=postgresql,\
+  driver-module-name=org.postgresql,\
+  driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource\
+)
+
+xa-data-source add \
+  --name=lab1XADS \
+  --jndi-name="java:/jboss/datasources/lab1XADS" \
+  --driver-name=postgresql \
+  --user-name=${env.POSTGRES_USER:postgres} \
+  --password=${env.POSTGRES_PASSWORD:postgres}
+
+/subsystem=datasources/xa-data-source=lab1XADS/xa-datasource-properties=ServerName:add(value=${env.POSTGRES_HOST:db})
+/subsystem=datasources/xa-data-source=lab1XADS/xa-datasource-properties=PortNumber:add(value=${env.POSTGRES_PORT:5432})
+/subsystem=datasources/xa-data-source=lab1XADS/xa-datasource-properties=DatabaseName:add(value=${env.POSTGRES_DB:postgres})
+
+/subsystem=datasources/xa-data-source=lab1XADS:enable
+
+stop-embedded-server

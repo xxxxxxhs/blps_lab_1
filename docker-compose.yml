@@ -20,7 +20,7 @@ services:
       - DB_TYPE=postgres
       - DB_HOST=db
       - DB_PORT=5432
-      - DB_NAME=onlyoffice   
+      - DB_NAME=onlyoffice
       - DB_USER=office_user
       - DB_PWD=onlyoffice
       - JWT_ENABLED=false
@@ -37,12 +37,13 @@ services:
     build: .
     container_name: app-1
     environment:
-      - RUNNING_PORT=8080
       - INSTANCE_NUM=1
-      - SPRING_JTA_NARAYANA_TRANSACTION_MANAGER_ID=lab1-tm-1
       - DDL_AUTO=update
-    volumes:
-      - reports:/app/reports
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     depends_on:
       - db
       - activemq
@@ -51,23 +52,30 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-      start_period: 30s
+      start_period: 60s
 
   app-2:
     build: .
     container_name: app-2
     environment:
-      - RUNNING_PORT=8080
       - INSTANCE_NUM=2
-      - SPRING_JTA_NARAYANA_TRANSACTION_MANAGER_ID=lab1-tm-2
       - DDL_AUTO=validate
-    volumes:
-      - reports:/app/reports
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
     depends_on:
       app-1:
         condition: service_healthy
       activemq:
         condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/8080' 2>/dev/null"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
 
   nginx:
     image: nginx:latest
@@ -103,6 +111,5 @@ services:
       - OVERWRITEPROTOCOL=http
 
 volumes:
-  reports:
   nextcloud_data:
   postgres_data:

@@ -1,7 +1,9 @@
 plugins {
-	id 'java'
-	id 'org.springframework.boot' version '4.0.3'
-	id 'io.spring.dependency-management' version '1.1.7'
+    id 'java'
+    id 'war'
+    id 'eclipse'
+    id 'org.springframework.boot' version '3.4.5'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'ru.blps'
@@ -9,30 +11,43 @@ version = '0.0.1-SNAPSHOT'
 description = 'blps lab 1'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter'
-	implementation 'org.postgresql:postgresql:42.7.8'
-	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'org.springframework.boot:spring-boot-starter-security'
-	implementation 'org.springframework.boot:spring-boot-starter-validation'
-	implementation 'org.jboss.narayana.jta:narayana-jta:7.2.2.Final'
-	implementation 'org.apache.activemq:activemq-client-jakarta:5.18.3'
-	implementation 'org.springframework:spring-jms'
-	implementation 'com.fasterxml.jackson.core:jackson-databind'
-	implementation 'org.springframework.boot:spring-boot-starter-quartz'
-	implementation 'jakarta.resource:jakarta.resource-api:2.1.0'
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.postgresql:postgresql:42.7.8'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.apache.activemq:activemq-client-jakarta:5.18.3'
+    implementation 'org.springframework:spring-jms'
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.springframework.boot:spring-boot-starter-quartz'
+
+    implementation project(':eis-adapter')
+    compileOnly 'jakarta.resource:jakarta.resource-api:2.1.0'
+
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+}
+
+bootWar {
+    enabled = false
+}
+
+war {
+    enabled = true
+    archiveClassifier = ''
+    classpath = classpath.filter { !it.name.startsWith('eis-adapter') }
 }
 
 tasks.named('test') {
-	enabled = false
+    enabled = false
 }

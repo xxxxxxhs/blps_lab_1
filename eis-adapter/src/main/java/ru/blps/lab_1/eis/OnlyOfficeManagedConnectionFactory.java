@@ -8,20 +8,28 @@ import jakarta.resource.spi.ManagedConnectionFactory;
 
 import javax.security.auth.Subject;
 import java.io.PrintWriter;
+import java.io.Serializable;
+import java.util.Objects;
 import java.util.Set;
 
-public class OnlyOfficeManagedConnectionFactory implements ManagedConnectionFactory {
+public class OnlyOfficeManagedConnectionFactory implements ManagedConnectionFactory, Serializable {
 
-    private final String webdavBaseUrl;
-    private final String user;
-    private final String password;
-    private PrintWriter logWriter;
+    private String webdavBaseUrl = "http://nginx/cloud/remote.php/dav/files/admin";
+    private String user = "admin";
+    private String password = "admin";
 
-    public OnlyOfficeManagedConnectionFactory(String webdavBaseUrl, String user, String password) {
-        this.webdavBaseUrl = webdavBaseUrl;
-        this.user = user;
-        this.password = password;
-    }
+    private transient PrintWriter logWriter;
+
+    public OnlyOfficeManagedConnectionFactory() {}
+
+    public String getWebdavBaseUrl() { return webdavBaseUrl; }
+    public void setWebdavBaseUrl(String webdavBaseUrl) { this.webdavBaseUrl = webdavBaseUrl; }
+
+    public String getUser() { return user; }
+    public void setUser(String user) { this.user = user; }
+
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
     @Override
     public Object createConnectionFactory(ConnectionManager cxManager) {
@@ -51,4 +59,18 @@ public class OnlyOfficeManagedConnectionFactory implements ManagedConnectionFact
 
     @Override
     public PrintWriter getLogWriter() { return logWriter; }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OnlyOfficeManagedConnectionFactory that)) return false;
+        return Objects.equals(webdavBaseUrl, that.webdavBaseUrl)
+            && Objects.equals(user, that.user)
+            && Objects.equals(password, that.password);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(webdavBaseUrl, user, password);
+    }
 }

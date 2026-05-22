@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<connector xmlns="https://jakarta.ee/xml/ns/jakartaee"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/connector_2_0.xsd"
+           version="2.0">
+
+    <description>JCA adapter for Nextcloud WebDAV</description>
+    <display-name>OnlyOffice/Nextcloud JCA Adapter</display-name>
+    <vendor-name>BLPS Lab 1</vendor-name>
+    <eis-type>OnlyOffice Document Server</eis-type>
+    <resourceadapter-version>1.0</resourceadapter-version>
+
+    <resourceadapter>
+        <outbound-resourceadapter>
+            <transaction-support>NoTransaction</transaction-support>
+            <connection-definition>
+                <managedconnectionfactory-class>
+                    ru.blps.lab_1.eis.OnlyOfficeManagedConnectionFactory
+                </managedconnectionfactory-class>
+
+                <config-property>
+                    <config-property-name>WebdavBaseUrl</config-property-name>
+                    <config-property-type>java.lang.String</config-property-type>
+                    <config-property-value>http://nginx/cloud/remote.php/dav/files/admin</config-property-value>
+                </config-property>
+                <config-property>
+                    <config-property-name>User</config-property-name>
+                    <config-property-type>java.lang.String</config-property-type>
+                    <config-property-value>admin</config-property-value>
+                </config-property>
+                <config-property>
+                    <config-property-name>Password</config-property-name>
+                    <config-property-type>java.lang.String</config-property-type>
+                    <config-property-value>admin</config-property-value>
+                </config-property>
+
+                <connectionfactory-interface>
+                    ru.blps.lab_1.eis.OnlyOfficeConnectionFactory
+                </connectionfactory-interface>
+                <connectionfactory-impl-class>
+                    ru.blps.lab_1.eis.OnlyOfficeConnectionFactoryImpl
+                </connectionfactory-impl-class>
+                <connection-interface>
+                    ru.blps.lab_1.eis.OnlyOfficeConnection
+                </connection-interface>
+                <connection-impl-class>
+                    ru.blps.lab_1.eis.OnlyOfficeConnectionImpl
+                </connection-impl-class>
+            </connection-definition>
+            <reauthentication-support>false</reauthentication-support>
+        </outbound-resourceadapter>
+    </resourceadapter>
+</connector>

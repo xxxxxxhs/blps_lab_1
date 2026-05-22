@@ -16,6 +16,10 @@ public class OnlyOfficeConnectionFactoryImpl implements OnlyOfficeConnectionFact
     private final ConnectionManager cm;
     private Reference reference;
 
+    public OnlyOfficeConnectionFactoryImpl() {
+        this(null, new DefaultConnectionManager());
+    }
+
     public OnlyOfficeConnectionFactoryImpl(OnlyOfficeManagedConnectionFactory mcf, ConnectionManager cm) {
         this.mcf = mcf;
         this.cm = cm;

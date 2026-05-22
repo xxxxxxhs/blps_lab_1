@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'eclipse'
+}
+
+group = 'ru.blps'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly 'jakarta.resource:jakarta.resource-api:2.1.0'
+    compileOnly 'org.slf4j:slf4j-api:2.0.9'
+}
+
+jar {
+    archiveFileName = 'eis-adapter.jar'
+}
+
+tasks.register('rar', Zip) {
+    archiveFileName = 'eis-adapter.rar'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+
+    from(jar) {
+        into '.'
+    }
+    from('src/main/resources') {
+        include 'META-INF/**'
+    }
+}
+
+build.dependsOn rar
