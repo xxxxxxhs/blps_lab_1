@@ -17,11 +17,26 @@ spring:
         format_sql: true
         transaction:
           jta:
-            platform: org.hibernate.engine.transaction.jta.platform.internal.NarayanaJtaPlatform
+            platform: org.hibernate.engine.transaction.jta.platform.internal.JBossStandAloneJtaPlatform
   jta:
     enabled: true
     narayana:
       transaction-manager-id: lab1-tm
+
+camunda:
+  bpm:
+    admin-user:
+      id: admin
+      password: admin
+    filter:
+      create: All tasks
+    database:
+      schema-update: true
+    authorization:
+      enabled: false
+    job-execution:
+      enabled: true
+    deployment-resource-pattern: classpath*:**/*.bpmn
 
 telegram:
   bot-token: 899752305:AAHnL5Z8dhLrMzkSG1HuKBk2ZvM_K4wXcK0

@@ -59,7 +59,17 @@ public class SecurityConfig {
     ) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/api/orders/**").authenticated()
+                .requestMatchers(
+                    "/camunda/**",
+                    "/engine-rest/**",
+                    "/app/**",
+                    "/lib/**",
+                    "/assets/**",
+                    "/favicon.ico"
+                ).permitAll()
+                .anyRequest().authenticated())
             .httpBasic(Customizer.withDefaults())
             .authenticationManager(authenticationManager);
         return http.build();

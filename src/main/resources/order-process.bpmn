@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:camunda="http://camunda.org/schema/1.0/bpmn"
+             xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+             xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"
+             xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI"
+             targetNamespace="http://blps.ru/bpmn"
+             exporter="Camunda Modeler"
+             exporterVersion="5.0.0">
+
+  <process id="orderDeliveryProcess" name="Процесс доставки заказа" isExecutable="true" camunda:historyTimeToLive="P180D">
+
+    <startEvent id="startEvent" name="Заказ создан">
+      <outgoing>flow_start_to_subprocess</outgoing>
+    </startEvent>
+
+    <subProcess id="subprocess_active" name="Активная доставка">
+      <incoming>flow_start_to_subprocess</incoming>
+      <outgoing>flow_subprocess_to_notify</outgoing>
+
+      <startEvent id="inner_start">
+        <outgoing>flow_inner_start_assign</outgoing>
+      </startEvent>
+
+      <serviceTask id="task_assignCourier" name="Назначить курьера"
+                   camunda:delegateExpression="${assignCourierDelegate}">
+        <incoming>flow_inner_start_assign</incoming>
+        <outgoing>flow_assign_to_decision</outgoing>
+      </serviceTask>
+
+      <userTask id="task_courierDecision" name="Принять или отклонить заказ"
+                camunda:assignee="${assignedCourierLogin}">
+        <extensionElements>
+          <camunda:formData>
+            <camunda:formField id="courierDecision" label="Решение курьера" type="enum">
+              <camunda:value id="ACCEPTED" name="Принять заказ"/>
+              <camunda:value id="REJECTED" name="Отклонить заказ"/>
+            </camunda:formField>
+          </camunda:formData>
+        </extensionElements>
+        <incoming>flow_assign_to_decision</incoming>
+        <incoming>flow_rejection_loop</incoming>
+        <outgoing>flow_decision_to_gateway</outgoing>
+      </userTask>
+
+      <exclusiveGateway id="gateway_courierDecision" name="Курьер принял?">
+        <incoming>flow_decision_to_gateway</incoming>
+        <outgoing>flow_accepted</outgoing>
+        <outgoing>flow_rejected</outgoing>
+      </exclusiveGateway>
+
+      <serviceTask id="task_recordRejection" name="Зафиксировать отказ и переназначить курьера"
+                   camunda:delegateExpression="${recordRejectionDelegate}">
+        <incoming>flow_rejected</incoming>
+        <outgoing>flow_rejection_loop</outgoing>
+      </serviceTask>
+
+      <serviceTask id="task_notifyRestaurantAccepted" name="Уведомить ресторан о заказе"
+                   camunda:delegateExpression="${notifyRestaurantAcceptedDelegate}">
+        <incoming>flow_accepted</incoming>
+        <outgoing>flow_notify_to_cook</outgoing>
+      </serviceTask>
+
+      <userTask id="task_restaurantCook" name="Приготовить заказ"
+                camunda:assignee="${restaurantLogin}">
+        <extensionElements>
+          <camunda:formData>
+            <camunda:formField id="cooked" label="Заказ приготовлен" type="boolean"/>
+          </camunda:formData>
+        </extensionElements>
+        <incoming>flow_notify_to_cook</incoming>
+        <outgoing>flow_cook_to_notify_courier</outgoing>
+      </userTask>
+
+      <serviceTask id="task_notifyCourierReady" name="Уведомить курьера о готовности заказа"
+                   camunda:delegateExpression="${notifyCourierReadyDelegate}">
+        <incoming>flow_cook_to_notify_courier</incoming>
+        <outgoing>flow_notify_to_pickup</outgoing>
+      </serviceTask>
+
+      <userTask id="task_courierPickup" name="Забрать заказ из ресторана"
+                camunda:assignee="${assignedCourierLogin}">
+        <extensionElements>
+          <camunda:formData>
+            <camunda:formField id="pickedUp" label="Заказ забран из ресторана" type="boolean"/>
+          </camunda:formData>
+        </extensionElements>
+        <incoming>flow_notify_to_pickup</incoming>
+        <outgoing>flow_pickup_to_notify_pickedup</outgoing>
+      </userTask>
+
+      <serviceTask id="task_notifyPickedUp" name="Уведомить клиента о выезде курьера"
+                   camunda:delegateExpression="${notifyPickedUpDelegate}">
+        <incoming>flow_pickup_to_notify_pickedup</incoming>
+        <outgoing>flow_notify_pickedup_to_deliver</outgoing>
+      </serviceTask>
+
+      <userTask id="task_courierDeliver" name="Доставить заказ клиенту"
+                camunda:assignee="${assignedCourierLogin}">
+        <extensionElements>
+          <camunda:formData>
+            <camunda:formField id="delivered" label="Заказ доставлен клиенту" type="boolean"/>
+          </camunda:formData>
+        </extensionElements>
+        <incoming>flow_notify_pickedup_to_deliver</incoming>
+        <outgoing>flow_deliver_to_inner_end</outgoing>
+      </userTask>
+
+      <endEvent id="inner_end">
+        <incoming>flow_deliver_to_inner_end</incoming>
+      </endEvent>
+
+      <sequenceFlow id="flow_inner_start_assign" sourceRef="inner_start" targetRef="task_assignCourier"/>
+      <sequenceFlow id="flow_assign_to_decision" sourceRef="task_assignCourier" targetRef="task_courierDecision"/>
+      <sequenceFlow id="flow_decision_to_gateway" sourceRef="task_courierDecision" targetRef="gateway_courierDecision"/>
+      <sequenceFlow id="flow_accepted" name="Принял" sourceRef="gateway_courierDecision" targetRef="task_notifyRestaurantAccepted">
+        <conditionExpression xsi:type="tFormalExpression">${courierDecision == 'ACCEPTED'}</conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="flow_rejected" name="Отклонил" sourceRef="gateway_courierDecision" targetRef="task_recordRejection">
+        <conditionExpression xsi:type="tFormalExpression">${courierDecision == 'REJECTED'}</conditionExpression>
+      </sequenceFlow>
+      <sequenceFlow id="flow_rejection_loop" sourceRef="task_recordRejection" targetRef="task_courierDecision"/>
+      <sequenceFlow id="flow_notify_to_cook" sourceRef="task_notifyRestaurantAccepted" targetRef="task_restaurantCook"/>
+      <sequenceFlow id="flow_cook_to_notify_courier" sourceRef="task_restaurantCook" targetRef="task_notifyCourierReady"/>
+      <sequenceFlow id="flow_notify_to_pickup" sourceRef="task_notifyCourierReady" targetRef="task_courierPickup"/>
+      <sequenceFlow id="flow_pickup_to_notify_pickedup" sourceRef="task_courierPickup" targetRef="task_notifyPickedUp"/>
+      <sequenceFlow id="flow_notify_pickedup_to_deliver" sourceRef="task_notifyPickedUp" targetRef="task_courierDeliver"/>
+      <sequenceFlow id="flow_deliver_to_inner_end" sourceRef="task_courierDeliver" targetRef="inner_end"/>
+    </subProcess>
+
+    <boundaryEvent id="boundary_cancel" name="Клиент отменяет заказ"
+                   attachedToRef="subprocess_active" cancelActivity="true">
+      <outgoing>flow_boundary_to_cancel</outgoing>
+      <messageEventDefinition id="msgDef_cancel" messageRef="message_cancelOrder"/>
+    </boundaryEvent>
+
+    <serviceTask id="task_notifyDelivered" name="Уведомить о доставке"
+                 camunda:delegateExpression="${notifyDeliveredDelegate}">
+      <incoming>flow_subprocess_to_notify</incoming>
+      <outgoing>flow_notify_to_end</outgoing>
+    </serviceTask>
+
+    <endEvent id="endEvent_delivered" name="Заказ доставлен">
+      <incoming>flow_notify_to_end</incoming>
+    </endEvent>
+
+    <serviceTask id="task_processCancel" name="Обработать отмену заказа"
+                 camunda:delegateExpression="${processCancellationDelegate}">
+      <incoming>flow_boundary_to_cancel</incoming>
+      <outgoing>flow_cancel_to_end</outgoing>
+    </serviceTask>
+
+    <endEvent id="endEvent_cancelled" name="Заказ отменён">
+      <incoming>flow_cancel_to_end</incoming>
+    </endEvent>
+
+    <sequenceFlow id="flow_start_to_subprocess" sourceRef="startEvent" targetRef="subprocess_active"/>
+    <sequenceFlow id="flow_subprocess_to_notify" sourceRef="subprocess_active" targetRef="task_notifyDelivered"/>
+    <sequenceFlow id="flow_notify_to_end" sourceRef="task_notifyDelivered" targetRef="endEvent_delivered"/>
+    <sequenceFlow id="flow_boundary_to_cancel" sourceRef="boundary_cancel" targetRef="task_processCancel"/>
+    <sequenceFlow id="flow_cancel_to_end" sourceRef="task_processCancel" targetRef="endEvent_cancelled"/>
+
+  </process>
+
+  <message id="message_cancelOrder" name="cancelOrder"/>
+
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="orderDeliveryProcess">
+
+      <bpmndi:BPMNShape id="startEvent_di" bpmnElement="startEvent">
+        <omgdc:Bounds x="152" y="252" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="138" y="295" width="64" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="subprocess_active_di" bpmnElement="subprocess_active" isExpanded="true">
+        <omgdc:Bounds x="230" y="130" width="1640" height="340"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="inner_start_di" bpmnElement="inner_start">
+        <omgdc:Bounds x="272" y="282" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_assignCourier_di" bpmnElement="task_assignCourier">
+        <omgdc:Bounds x="360" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_courierDecision_di" bpmnElement="task_courierDecision">
+        <omgdc:Bounds x="520" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="gateway_courierDecision_di" bpmnElement="gateway_courierDecision" isMarkerVisible="true">
+        <omgdc:Bounds x="685" y="275" width="50" height="50"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="668" y="245" width="84" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_recordRejection_di" bpmnElement="task_recordRejection">
+        <omgdc:Bounds x="660" y="390" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_notifyRestaurantAccepted_di" bpmnElement="task_notifyRestaurantAccepted">
+        <omgdc:Bounds x="800" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_restaurantCook_di" bpmnElement="task_restaurantCook">
+        <omgdc:Bounds x="960" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_notifyCourierReady_di" bpmnElement="task_notifyCourierReady">
+        <omgdc:Bounds x="1120" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_courierPickup_di" bpmnElement="task_courierPickup">
+        <omgdc:Bounds x="1280" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_notifyPickedUp_di" bpmnElement="task_notifyPickedUp">
+        <omgdc:Bounds x="1440" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_courierDeliver_di" bpmnElement="task_courierDeliver">
+        <omgdc:Bounds x="1600" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="inner_end_di" bpmnElement="inner_end">
+        <omgdc:Bounds x="1772" y="282" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="boundary_cancel_di" bpmnElement="boundary_cancel">
+        <omgdc:Bounds x="852" y="452" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="879" y="489" width="84" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_processCancel_di" bpmnElement="task_processCancel">
+        <omgdc:Bounds x="830" y="560" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="endEvent_cancelled_di" bpmnElement="endEvent_cancelled">
+        <omgdc:Bounds x="992" y="582" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="974" y="625" width="72" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="task_notifyDelivered_di" bpmnElement="task_notifyDelivered">
+        <omgdc:Bounds x="1940" y="260" width="100" height="80"/>
+        <bpmndi:BPMNLabel/>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNShape id="endEvent_delivered_di" bpmnElement="endEvent_delivered">
+        <omgdc:Bounds x="2112" y="282" width="36" height="36"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="2094" y="325" width="73" height="27"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+
+      <bpmndi:BPMNEdge id="flow_start_to_subprocess_di" bpmnElement="flow_start_to_subprocess">
+        <omgdi:waypoint x="188" y="270"/>
+        <omgdi:waypoint x="230" y="270"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_inner_start_assign_di" bpmnElement="flow_inner_start_assign">
+        <omgdi:waypoint x="308" y="300"/>
+        <omgdi:waypoint x="360" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_assign_to_decision_di" bpmnElement="flow_assign_to_decision">
+        <omgdi:waypoint x="460" y="300"/>
+        <omgdi:waypoint x="520" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_decision_to_gateway_di" bpmnElement="flow_decision_to_gateway">
+        <omgdi:waypoint x="620" y="300"/>
+        <omgdi:waypoint x="685" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_accepted_di" bpmnElement="flow_accepted">
+        <omgdi:waypoint x="735" y="300"/>
+        <omgdi:waypoint x="800" y="300"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="752" y="282" width="40" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_rejected_di" bpmnElement="flow_rejected">
+        <omgdi:waypoint x="710" y="325"/>
+        <omgdi:waypoint x="710" y="390"/>
+        <bpmndi:BPMNLabel>
+          <omgdc:Bounds x="718" y="350" width="52" height="14"/>
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_rejection_loop_di" bpmnElement="flow_rejection_loop">
+        <omgdi:waypoint x="660" y="430"/>
+        <omgdi:waypoint x="570" y="430"/>
+        <omgdi:waypoint x="570" y="340"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_notify_to_cook_di" bpmnElement="flow_notify_to_cook">
+        <omgdi:waypoint x="900" y="300"/>
+        <omgdi:waypoint x="960" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_cook_to_notify_courier_di" bpmnElement="flow_cook_to_notify_courier">
+        <omgdi:waypoint x="1060" y="300"/>
+        <omgdi:waypoint x="1120" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_notify_to_pickup_di" bpmnElement="flow_notify_to_pickup">
+        <omgdi:waypoint x="1220" y="300"/>
+        <omgdi:waypoint x="1280" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_pickup_to_notify_pickedup_di" bpmnElement="flow_pickup_to_notify_pickedup">
+        <omgdi:waypoint x="1380" y="300"/>
+        <omgdi:waypoint x="1440" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_notify_pickedup_to_deliver_di" bpmnElement="flow_notify_pickedup_to_deliver">
+        <omgdi:waypoint x="1540" y="300"/>
+        <omgdi:waypoint x="1600" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_deliver_to_inner_end_di" bpmnElement="flow_deliver_to_inner_end">
+        <omgdi:waypoint x="1700" y="300"/>
+        <omgdi:waypoint x="1772" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_subprocess_to_notify_di" bpmnElement="flow_subprocess_to_notify">
+        <omgdi:waypoint x="1870" y="300"/>
+        <omgdi:waypoint x="1940" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_notify_to_end_di" bpmnElement="flow_notify_to_end">
+        <omgdi:waypoint x="2040" y="300"/>
+        <omgdi:waypoint x="2112" y="300"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_boundary_to_cancel_di" bpmnElement="flow_boundary_to_cancel">
+        <omgdi:waypoint x="870" y="488"/>
+        <omgdi:waypoint x="870" y="560"/>
+      </bpmndi:BPMNEdge>
+
+      <bpmndi:BPMNEdge id="flow_cancel_to_end_di" bpmnElement="flow_cancel_to_end">
+        <omgdi:waypoint x="930" y="600"/>
+        <omgdi:waypoint x="992" y="600"/>
+      </bpmndi:BPMNEdge>
+
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+
+</definitions>
