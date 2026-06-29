@@ -1,6 +1,6 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
-metadata: 
+metadata:
   name: blps
   namespace: argocd
   finalizers:
@@ -17,12 +17,12 @@ spec:
       parameters:
         - name: postgresql.auth.password
           value: aboba
-    destination:
-      server: https://kubernetes.default.svc
-      namespace: deafult
-    syncPolicy:
-      automated:
-        prune: trune
-        selfHeal: true
-      syncOptions:
-        - CreateNamespace=true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: default
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
