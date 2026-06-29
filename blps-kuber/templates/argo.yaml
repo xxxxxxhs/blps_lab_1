@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata: 
+  name: blps
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/xxxxxxhs/blps_lab_1
+    targetRevision: kuber
+    path: blps-kuber
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: postgresql.auth.password
+          value: aboba
+    destination:
+      server: https://kubernetes.default.svc
+      namespace: deafult
+    syncPolicy:
+      automated:
+        prune: trune
+        selfHeal: true
+      syncOptions:
+        - CreateNamespace=true

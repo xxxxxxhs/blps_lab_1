@@ -1,0 +1,45 @@
+replicaCount: 1
+
+image:
+  repository: xxxxxxhs/blps
+  tag: "1.2"
+
+server:
+  port: 8080
+
+service:
+  port: 8080
+
+ingress:
+  className: nginx
+  host: blps.fkqly.com
+
+spring:
+  instanceNum: 0
+
+db:
+  host: blps-postgresql
+  port: 5432
+  ddlAuto: update
+  sqlInitMode: always
+
+activemq:
+  host: activemq
+  stompPort: 61613
+  brokerUrl: "tcp://activemq:61616"
+  queue: order.notifications
+
+telegram:
+  botToken: ""
+  chatId: ""
+
+postgresql:
+  auth:
+    username: postgres
+    password: ""
+    database: blps
+  primary:
+    persistence:
+      size: 1Gi
+  volumePermissions:
+    enabled: true

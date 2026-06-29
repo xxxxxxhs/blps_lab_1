@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-spring
+  labels:
+    app: {{ .Release.Name }}-blps
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-blps
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-blps
+    spec:
+      containers:
+        - name: spring
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          ports:
+            - containerPort: {{ .Values.server.port }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-spring-config
+            - secretRef:
+                name: {{ .Release.Name }}-spring-secret
+          env:
+            - name: NARAYANA_TM_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          startupProbe:
+            httpGet:
+              path: /api/util/info
+              port: {{ .Values.server.port }}
+            failureThreshold: 20
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/util/info
+              port: {{ .Values.server.port }}
+            initialDelaySeconds: 0
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/util/info
+              port: {{ .Values.server.port }}
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            failureThreshold: 3

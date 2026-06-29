@@ -1,68 +1,41 @@
 server:
-  port: ${RUNNING_PORT}
+  port: ${SERVER_PORT:8080}
 
 spring:
   application:
-    instance-num: ${INSTANCE_NUM}
-    name: lab_3
+    name: courier-backend
+    instance-num: ${INSTANCE_NUM:0}
   datasource:
-    url: jdbc:postgresql://db:5432/postgres
-    username: postgres
-    password: postgres
-    host: db
-    port: 5432
-    dbname: postgres
+    host: ${DB_HOST:localhost}
+    port: ${DB_PORT:5432}
+    dbname: ${DB_NAME:postgres}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
   sql:
     init:
-      mode: always
+      mode: ${SQL_INIT_MODE:always}
   jpa:
     defer-datasource-initialization: true
     open-in-view: false
     hibernate:
       ddl-auto: ${DDL_AUTO:update}
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
         transaction:
           jta:
             platform: org.hibernate.engine.transaction.jta.platform.internal.NarayanaJtaPlatform
   jta:
     enabled: true
     narayana:
-      transaction-manager-id: ${SPRING_JTA_NARAYANA_TRANSACTION_MANAGER_ID}
-  quartz:
-    job-store-type: jdbc
-    jdbc:
-      initialize-schema: always
-    properties:
-      org.quartz.scheduler.instanceName: lab1-scheduler
-      org.quartz.scheduler.instanceId: AUTO
-      org.quartz.jobStore.driverDelegateClass: org.quartz.impl.jdbcjobstore.PostgreSQLDelegate
-      org.quartz.jobStore.isClustered: true
-      org.quartz.jobStore.clusterCheckinInterval: 10000
-      org.quartz.threadPool.threadCount: 5
+      transaction-manager-id: ${NARAYANA_TM_ID:local-tm}
 
 activemq:
-  host: activemq
-  stomp-port: 61613
-  broker-url: tcp://activemq:61616
-  queue: order.notifications
+  host: ${ACTIVEMQ_HOST:localhost}
+  stomp-port: ${ACTIVEMQ_STOMP_PORT:61613}
+  broker-url: ${ACTIVEMQ_BROKER_URL:tcp://localhost:61616}
+  queue: ${ACTIVEMQ_QUEUE:order.notifications}
 
 telegram:
-  bot-token: 899752305:AAHnL5Z8dhLrMzkSG1HuKBk2ZvM_K4wXcK0
-  chat-id: 295265787
-
-eis:
-  nextcloud:
-    webdav-url: http://nginx/cloud/remote.php/dav/files/admin
-    user: admin
-    password: admin
-  onlyoffice:
-    base-url: http://onlyoffice
-    public-base-url: http://nginx
-  reports:
-    daily-cron: "0 55 23 * * ?"
-    hourly-cron: "0 0 * * * ?"
-    stuck-cron: "0 0/15 * * * ?"
-    stuck-threshold-minutes: 30
+  bot-token: ${TELEGRAM_BOT_TOKEN:}
+  chat-id: ${TELEGRAM_CHAT_ID:}
