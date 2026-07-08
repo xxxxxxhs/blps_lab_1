@@ -36,7 +36,7 @@ telegram:
 postgresql:
   auth:
     username: postgres
-    password: ""
+    password: "postgre"
     database: blps
   primary:
     persistence:
