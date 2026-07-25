@@ -43,3 +43,6 @@ postgresql:
       size: 1Gi
   volumePermissions:
     enabled: true
+
+vault:
+  appRoleId: 7dcf4ee9-e9be-8e13-661d-8d4c20e1a759
