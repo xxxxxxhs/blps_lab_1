@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    app: {{ .Release.name }}-blps
+    app: {{ .Release.Name }}-blps
   name: {{ .Release.Name }}-spring-service
 spec:
   selector:
