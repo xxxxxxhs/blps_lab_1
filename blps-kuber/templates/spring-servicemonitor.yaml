@@ -1,0 +1,14 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-spring
+  labels:
+    release: prometheus 
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-blps
+  endpoints:
+    - port: http
+      path: /actuator/prometheus
+      interval: 15s

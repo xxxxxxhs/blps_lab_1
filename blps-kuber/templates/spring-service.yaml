@@ -6,6 +6,7 @@ spec:
   selector:
     app: {{ .Release.Name }}-blps
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: {{ .Values.service.port }}
       targetPort: {{ .Values.server.port }}

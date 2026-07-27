@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: xxxxxxhs/blps
-  tag: "1.2"
+  tag: "1.3"
 
 server:
   port: 8080

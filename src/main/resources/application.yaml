@@ -39,3 +39,12 @@ activemq:
 telegram:
   bot-token: ${TELEGRAM_BOT_TOKEN:}
   chat-id: ${TELEGRAM_CHAT_ID:}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always

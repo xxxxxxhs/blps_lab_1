@@ -1,25 +1,28 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: blps
+  name: prometheus
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: default
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
-    targetRevision: kuber
-    path: blps-kuber
+    chart: kube-prometheus-stack
+    targetRevision: "87.19.1"
     helm:
-      valueFiles:
-        - values.yaml
+      values: |
+        grafana:
+          admin:
+            existingSecret: ""
+            userKey: admin-user
+            passwordKey: admin-password
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: monitoring
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
