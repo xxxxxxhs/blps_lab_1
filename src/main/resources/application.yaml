@@ -48,3 +48,8 @@ management:
   endpoint:
     health:
       show-details: always
+
+logging:
+  structured:
+    format:
+      console: ecs

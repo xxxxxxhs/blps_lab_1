@@ -1,0 +1,49 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: opensearch
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://opensearch-project.github.io/helm-charts
+    chart: opensearch
+    targetRevision: "3.7.0"
+    helm:
+      values: |
+        clusterName: opensearch-cluster
+        nodeGroup: master
+        singleNode: true
+        replicas: 1
+
+        opensearchJavaOpts: "-Xmx512m -Xms512m"
+
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "1Gi"
+          limits:
+            cpu: "1"
+            memory: "1.5Gi"
+
+        persistence:
+          enabled: false
+
+        extraEnvs:
+          - name: DISABLE_SECURITY_PLUGIN
+            value: "true"
+
+        config:
+          opensearch.yml: |
+              plugins.security.disabled: true
+
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: logging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
