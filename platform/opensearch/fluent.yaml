@@ -51,8 +51,7 @@ spec:
                 Index fluent-bit
                 Suppress_Type_Name On
                 tls Off
-
-        
+                Buffer_Size 20MB
 
   destination:
     server: https://kubernetes.default.svc
