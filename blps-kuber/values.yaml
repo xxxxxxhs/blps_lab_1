@@ -45,4 +45,4 @@ postgresql:
     enabled: true
 
 vault:
-  appRoleId: 7dcf4ee9-e9be-8e13-661d-8d4c20e1a759
+  appRoleId: 28eaa2bf-ed41-835c-92d1-b091529a12d4
