@@ -41,6 +41,7 @@ spec:
                 Keep_Log Off
                 K8S-Logging.Parser On
                 K8S-Logging.Exclude On
+                Buffer_Size 0
 
           outputs: |
             [OUTPUT]
@@ -48,10 +49,11 @@ spec:
                 Match kube.*
                 Host opensearch-cluster-master
                 Port 9200
-                Index fluent-bit
+                Logstash_Prefix fluent-bit
+                Logstash_Format On
+                Replace_Dots On
                 Suppress_Type_Name On
                 tls Off
-                Buffer_Size 20MB
 
   destination:
     server: https://kubernetes.default.svc
